@@ -121,6 +121,39 @@ export const getFontKitFont = async (
   }
 
   const currentFont = font[fntNm] || getFallbackFont(font) || getDefaultFont()[DEFAULT_FONT_NAME];
+  console.log('currentFont', currentFont);
+  let fontData = currentFont.data;
+  if (typeof fontData === 'string') {
+    fontData = fontData.startsWith('http')
+      ? await fetch(fontData).then((res) => res.arrayBuffer())
+      : b64toUint8Array(fontData);
+  }
+
+  // Convert fontData to Buffer if it's not already a Buffer
+  let fontDataBuffer: Buffer;
+  if (fontData instanceof Buffer) {
+    fontDataBuffer = fontData;
+  } else {
+    fontDataBuffer = Buffer.from(fontData as ArrayBufferLike);
+  }
+  const fontKitFont = fontkit.create(fontDataBuffer) as fontkit.Font;
+  _cache.set(cacheKey, fontKitFont);
+
+  return fontKitFont;
+};
+const getCacheKeyBold = (fontName: string) => `getFontKitFontBold-${fontName}`;
+export const getFontKitFontBold = async (
+  fontName: string | undefined,
+  font: Font,
+  _cache: Map<string | number, fontkit.Font>,
+) => {
+  const fntNm = fontName + 'Bold' || getFallbackFontName(font);
+  const cacheKey = getCacheKeyBold(fntNm);
+  if (_cache.has(cacheKey)) {
+    return _cache.get(cacheKey) as fontkit.Font;
+  }
+
+  const currentFont = font[fntNm] || getFallbackFont(font) || getDefaultFont()[DEFAULT_FONT_NAME];
   let fontData = currentFont.data;
   if (typeof fontData === 'string') {
     fontData = fontData.startsWith('http')
@@ -360,6 +393,41 @@ export const splitTextToSize = (arg: {
   fontKitFont: fontkit.Font;
 }) => {
   const { value, characterSpacing, fontSize, fontKitFont, boxWidthInPt } = arg;
+
+  const valueSplit = extractFormattedSegments(value);
+  console.log(valueSplit);
+
+  valueSplit.forEach((t) => {
+    const { type, text } = t;
+    let lines: string[] = [];
+    if (t.type === 'plain') {
+      value.split(/\r\n|\r|\n|\f|\u000B/g).forEach((line: string) => {
+        lines = lines.concat(
+          getSplittedLinesBySegmenter(line, {
+            font: fontKitFont,
+            fontSize,
+            characterSpacing,
+            boxWidthInPt,
+          }),
+        );
+      });
+    }
+
+    if (t.type === 'bold') {
+      value.split(/\r\n|\r|\n|\f|\u000B/g).forEach((line: string) => {
+        lines = lines.concat(
+          getSplittedLinesBySegmenter(line, {
+            font: fontKitFont,
+            fontSize,
+            characterSpacing,
+            boxWidthInPt,
+          }),
+        );
+      });
+    }
+    console.log(lines);
+  });
+
   const fontWidthCalcValues: FontWidthCalcValues = {
     font: fontKitFont,
     fontSize,
@@ -367,6 +435,7 @@ export const splitTextToSize = (arg: {
     boxWidthInPt,
   };
   let lines: string[] = [];
+
   value.split(/\r\n|\r|\n|\f|\u000B/g).forEach((line: string) => {
     lines = lines.concat(getSplittedLinesBySegmenter(line, fontWidthCalcValues));
   });
@@ -548,3 +617,32 @@ export const filterEndJP = (lines: string[]): string[] => {
     return filtered;
   }
 };
+
+// Utility: Extract segments surrounded by <B>...</B> as 'bold', <I>...</I> as 'italic', others as 'plain'
+export function extractFormattedSegments(
+  str: string,
+): Array<{ type: 'bold' | 'italic' | 'plain'; text: string; x: number; y: number }> {
+  const result: Array<{ type: 'bold' | 'italic' | 'plain'; text: string; x: number; y: number }> =
+    [];
+  const regex = /(<B>(.*?)<\/B>)|(<I>(.*?)<\/I>)/gi;
+  let lastIndex = 0;
+  let match;
+  while ((match = regex.exec(str)) !== null) {
+    if (match.index > lastIndex) {
+      // Add plain text before the tag
+      result.push({ type: 'plain', text: str.slice(lastIndex, match.index), x: 0, y: 0 });
+    }
+    if (match[1]) {
+      // Bold
+      result.push({ type: 'bold', text: match[2], x: 0, y: 0 });
+    } else if (match[3]) {
+      // Italic
+      result.push({ type: 'italic', text: match[4], x: 0, y: 0 });
+    }
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < str.length) {
+    result.push({ type: 'plain', text: str.slice(lastIndex), x: 0, y: 0 });
+  }
+  return result.filter((seg) => seg.text.length > 0);
+}

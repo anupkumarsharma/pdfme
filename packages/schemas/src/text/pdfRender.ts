@@ -27,6 +27,7 @@ import {
   getFontKitFont,
   widthOfTextAtSize,
   splitTextToSize,
+  extractFormattedSegments,
 } from './helper.js';
 import { convertForPdfLayoutProps, rotatePoint, hex2PrintingColor } from '../utils.js';
 
@@ -93,22 +94,38 @@ export const pdfRender = async (arg: PDFRenderProps<TextSchema>) => {
 
   const { font = getDefaultFont(), colorType } = options;
 
-  const [pdfFontObj, fontKitFont] = await Promise.all([
+  const [pdfFontObj, fontKitFont, fontKitFontBold, fontKitFontItalic] = await Promise.all([
     embedAndGetFontObj({
       pdfDoc,
       font,
       _cache: _cache as unknown as Map<PDFDocument, { [key: string]: PDFFont }>,
     }),
     getFontKitFont(schema.fontName, font, _cache as Map<string, FontKitFont>),
+    getFontKitFont(schema.fontName + 'Bold', font, _cache as Map<string, FontKitFont>),
+    getFontKitFont(schema.fontName + 'Italic', font, _cache as Map<string, FontKitFont>),
   ]);
   const fontProp = getFontProp({ value, fontKitFont, schema, colorType });
-
   const { fontSize, color, alignment, verticalAlignment, lineHeight, characterSpacing } = fontProp;
 
   const fontName = (
     schema.fontName ? schema.fontName : getFallbackFontName(font)
   ) as keyof typeof pdfFontObj;
+  const fontNameBold = fontName + 'Bold';
+  const fontNameItalic = fontName + 'Italic';
   const pdfFontValue = pdfFontObj && pdfFontObj[fontName];
+  const pdfFontBoldValue = pdfFontObj && pdfFontObj[fontNameBold];
+  const pdfFontItalicValue = pdfFontObj && pdfFontObj[fontNameItalic];
+  const fontMap = {
+    ['plain']: pdfFontValue,
+    ['bold']: pdfFontBoldValue,
+    ['italic']: pdfFontItalicValue,
+  };
+
+  const fontKitMap = {
+    ['plain']: fontKitFont,
+    ['bold']: fontKitFontBold,
+    ['italic']: fontKitFontItalic,
+  };
 
   const pageHeight = page.getHeight();
   const {
@@ -217,16 +234,39 @@ export const pdfRender = async (arg: PDFRenderProps<TextSchema>) => {
       spacing += (width - textWidth) / len;
     }
     page.pushOperators(pdfLib.setCharacterSpacing(spacing));
-
-    page.drawText(trimmed, {
-      x: xLine,
-      y: yLine,
-      rotate,
-      size: fontSize,
-      color,
-      lineHeight: lineHeight * fontSize,
-      font: pdfFontValue,
-      opacity,
+    const trimmedArray = extractFormattedSegments(trimmed);
+    for (let index = 0; index < trimmedArray.length; index++) {
+      const element = trimmedArray[index];
+      element.y = yLine;
+      if (index === 0) {
+        element.x = xLine;
+      } else {
+        // Calculate X based on width of previous elements (with character spacing)
+        let prevX = xLine;
+        for (let j = 0; j < index; j++) {
+          prevX += widthOfTextAtSize(
+            trimmedArray[j].text,
+            fontKitMap[trimmedArray[j].type],
+            fontSize,
+            characterSpacing,
+          );
+        }
+        element.x = prevX;
+      }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    trimmedArray.forEach((trimmed) => {
+      page.drawText(trimmed.text, {
+        x: trimmed.x,
+        y: trimmed.y,
+        rotate,
+        size: fontSize,
+        color,
+        lineHeight: lineHeight * fontSize,
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        font: fontMap[trimmed.type] || pdfFontValue,
+        opacity,
+      });
     });
   });
 };

@@ -291,9 +291,9 @@ export const template2SchemasList = async (_template: Template) => {
   } else {
     const b64BasePdf = await getB64BasePdf(basePdf);
     // pdf2size accepts both ArrayBuffer and Uint8Array
-    const pdfArrayBuffer = b64toUint8Array(b64BasePdf);
+    const pdfUint8Array = b64toUint8Array(b64BasePdf);
 
-    pageSizes = await pdf2size(pdfArrayBuffer);
+    pageSizes = await pdf2size(pdfUint8Array.buffer);
   }
 
   const ssl = schemasForUI.length;
@@ -526,7 +526,11 @@ export const setFontNameRecursively = (
   seen.add(obj);
 
   for (const key in obj) {
-    if (key === 'fontName' && Object.prototype.hasOwnProperty.call(obj, key) && obj[key] === undefined) {
+    if (
+      key === 'fontName' &&
+      Object.prototype.hasOwnProperty.call(obj, key) &&
+      obj[key] === undefined
+    ) {
       obj[key] = fontName;
     } else if (typeof obj[key] === 'object' && obj[key] !== null) {
       setFontNameRecursively(obj[key] as Record<string, unknown>, fontName, seen);

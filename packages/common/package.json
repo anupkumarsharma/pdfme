@@ -32,7 +32,8 @@
       },
       "require": "./dist/cjs/src/index.js",
       "types": "./dist/types/src/index.d.ts"
-    }
+    },
+    "./cjs/src/index.js": "./dist/cjs/src/index.js"
   },
   "scripts": {
     "dev": "node set-version.js && tsc -p tsconfig.esm.json -w",

@@ -23,7 +23,15 @@ export const getFontsData = (): Font => ({
   NotoSansJP: {
     fallback: false,
     data: 'https://fonts.gstatic.com/s/notosansjp/v53/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj75vY0rw-oME.ttf',
-  }
+  },
+  RobotoBold: {
+    fallback: false,
+    data: 'https://fonts.gstatic.com/s/roboto/v15/Uxzkqj-MIMWle-XP2pDNAA.ttf',
+  },
+  RobotoItalic: {
+    fallback: false,
+    data: 'https://fonts.gstatic.com/s/roboto/v15/hcKoSgxdnKlbH5dlTwKbow.ttf',
+  },
 });
 
 export const readFile = (file: File | null, type: 'text' | 'dataURL' | 'arrayBuffer') => {
@@ -70,7 +78,7 @@ export const downloadJsonFile = (json: unknown, title: string) => {
 
 export const handleLoadTemplate = (
   e: React.ChangeEvent<HTMLInputElement>,
-  currentRef: Designer | Form | Viewer | null
+  currentRef: Designer | Form | Viewer | null,
 ) => {
   if (e.target && e.target.files && e.target.files[0]) {
     getTemplateFromJsonFile(e.target.files[0])
@@ -147,11 +155,11 @@ export const getBlankTemplate = () =>
       height: 297,
       padding: [20, 10, 20, 10],
     },
-  } as Template);
+  }) as Template;
 
 export const getTemplateById = async (templateId: string): Promise<Template> => {
   const template = await fetch(`/template-assets/${templateId}/template.json`).then((res) =>
-    res.json()
+    res.json(),
   );
   checkTemplate(template);
   return template as Template;
