@@ -7,21 +7,24 @@ const SauceHanSansJPData = readFileSync(path.join(__dirname, `/assets/fonts/Sauc
 const SauceHanSerifJPData = readFileSync(path.join(__dirname, `/assets/fonts/SauceHanSerifJP.ttf`));
 const NotoSerifJPRegularData = readFileSync(
   // path.join(__dirname, `/assets/fonts/NotoSerifJP-Regular.otf`)
-  path.join(__dirname, `/assets/fonts/NotoSerifJP-Regular.ttf`)
+  path.join(__dirname, `/assets/fonts/NotoSerifJP-Regular.ttf`),
 );
 const NotoSansJPRegularData = readFileSync(
   // path.join(__dirname, `/assets/fonts/NotoSansJP-Regular.otf`)
-  path.join(__dirname, `/assets/fonts/NotoSansJP-Regular.ttf`)
+  path.join(__dirname, `/assets/fonts/NotoSansJP-Regular.ttf`),
 );
 const GloriaHallelujahRegularData = readFileSync(
-  path.join(__dirname, `/assets/fonts/GloriaHallelujah-Regular.ttf`)
+  path.join(__dirname, `/assets/fonts/GloriaHallelujah-Regular.ttf`),
 );
 const GreatVibesRegularData = readFileSync(
-  path.join(__dirname, `/assets/fonts/GreatVibes-Regular.ttf`)
+  path.join(__dirname, `/assets/fonts/GreatVibes-Regular.ttf`),
 );
 const JuliusSansOneRegularData = readFileSync(
-  path.join(__dirname, `/assets/fonts/JuliusSansOne-Regular.ttf`)
+  path.join(__dirname, `/assets/fonts/JuliusSansOne-Regular.ttf`),
 );
+
+const Roboto = readFileSync(path.join(__dirname, `/assets/fonts/Roboto-Bold.ttf`));
+const RobotoItalic = readFileSync(path.join(__dirname, `/assets/fonts/hcKoSgxdnKlbH5dlTwKbow.ttf`));
 
 export const getFont = (): Font => ({
   ...getDefaultFont(),
@@ -34,8 +37,18 @@ export const getFont = (): Font => ({
   'JuliusSansOne-Regular': { data: JuliusSansOneRegularData },
   NotoSerifJP: { data: NotoSerifJPRegularData },
   NotoSansJP: { data: NotoSansJPRegularData },
+  RobotoBold: { data: Roboto },
+  RobotoItalic: { data: RobotoItalic },
 });
 export const pdfToImages = async (pdf: ArrayBuffer | Uint8Array): Promise<Buffer[]> => {
-  const arrayBuffers = await pdf2img(pdf, { imageType: 'png' });
+  let arrayBuffer: ArrayBuffer;
+  if (pdf instanceof Uint8Array) {
+    arrayBuffer = pdf.buffer.slice(pdf.byteOffset, pdf.byteOffset + pdf.byteLength) as ArrayBuffer;
+  } else if (pdf instanceof SharedArrayBuffer) {
+    arrayBuffer = new Uint8Array(pdf).buffer;
+  } else {
+    arrayBuffer = pdf;
+  }
+  const arrayBuffers = await pdf2img(arrayBuffer, {});
   return arrayBuffers.map((buf) => Buffer.from(new Uint8Array(buf)));
 };

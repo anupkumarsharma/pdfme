@@ -74,6 +74,15 @@ const font = {
   NotoSansJP: {
     fallback: false,
     data: 'https://fonts.gstatic.com/s/notosansjp/v53/-F6jfjtqLzI2JPCgQBnw7HFyzSD-AsregP8VFBEj75vY0rw-oME.ttf',
+
+  },
+  RobotoBold: {
+    fallback: false,
+    data: 'https://fonts.gstatic.com/s/roboto/v15/Uxzkqj-MIMWle-XP2pDNAA.ttf',
+  },
+  RobotoItalic: {
+    fallback: false,
+    data: 'http://fonts.gstatic.com/s/roboto/v15/hcKoSgxdnKlbH5dlTwKbow.ttf',
   }
 };
 
