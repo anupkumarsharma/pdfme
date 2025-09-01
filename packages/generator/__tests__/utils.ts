@@ -3,8 +3,6 @@ import * as path from 'path';
 import { Font, getDefaultFont } from '@pdfme/common';
 import { pdf2img } from '@pdfme/converter';
 
-const SauceHanSansJPData = readFileSync(path.join(__dirname, `/assets/fonts/SauceHanSansJP.ttf`));
-const SauceHanSerifJPData = readFileSync(path.join(__dirname, `/assets/fonts/SauceHanSerifJP.ttf`));
 const NotoSerifJPRegularData = readFileSync(
   // path.join(__dirname, `/assets/fonts/NotoSerifJP-Regular.otf`)
   path.join(__dirname, `/assets/fonts/NotoSerifJP-Regular.ttf`),
@@ -28,8 +26,6 @@ const RobotoItalic = readFileSync(path.join(__dirname, `/assets/fonts/hcKoSgxdnK
 
 export const getFont = (): Font => ({
   ...getDefaultFont(),
-  SauceHanSansJP: { data: SauceHanSansJPData },
-  SauceHanSerifJP: { data: SauceHanSerifJPData },
   'NotoSerifJP-Regular': { data: NotoSerifJPRegularData },
   'NotoSansJP-Regular': { data: NotoSansJPRegularData },
   'GloriaHallelujah-Regular': { data: GloriaHallelujahRegularData },
@@ -39,6 +35,10 @@ export const getFont = (): Font => ({
   NotoSansJP: { data: NotoSansJPRegularData },
   RobotoBold: { data: Roboto },
   RobotoItalic: { data: RobotoItalic },
+  'PinyonScript-Regular': {
+    fallback: false,
+    data: 'https://fonts.gstatic.com/s/pinyonscript/v22/6xKpdSJbL9-e9LuoeQiDRQR8aOLQO4bhiDY.ttf',
+  },
 });
 export const pdfToImages = async (pdf: ArrayBuffer | Uint8Array): Promise<Buffer[]> => {
   let arrayBuffer: ArrayBuffer;
